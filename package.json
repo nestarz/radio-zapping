@@ -1,0 +1,20 @@
+{
+  "name": "radio-zapping",
+  "version": "1.0.0",
+  "main": "main.js",
+  "license": "MIT",
+  "dependencies": {
+    "@cliqz/adblocker-puppeteer": "^1.5.0",
+    "cross-fetch": "^3.0.4",
+    "esm": "^3.2.25",
+    "log-to-file": "^2.0.2",
+    "mic-recorder-to-mp3": "^2.2.1",
+    "node-audiorecorder": "^1.4.2",
+    "node-mic-record": "^0.0.1",
+    "puppeteer-core": "^2.0.0"
+  },
+  "scripts": {
+    "start": "node -r esm index.js",
+    "test": "node -r esm test.js"
+  }
+}
