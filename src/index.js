@@ -1,26 +1,28 @@
 import path from "path";
 import radioZapping from "./main.js";
 
+const f00 = (...args) => args.map(n => String(n).padStart(2, "0"));
+
 const radios = [
   {
     name: "franceculture",
-    entrypoint: (YYYY, MM, DD) =>
-      `https://www.franceculture.fr/archives/${YYYY}/${MM}/${DD}`,
+    entrypoint: (year, month, day) =>
+      `https://www.franceculture.fr/archives/${year}/${f00(month)}/${f00(day)}`,
     anchors: ".archives-by-day-list-element a",
     playbtn: "button.replay-button"
   },
   {
     name: "franceinter",
-    entrypoint: (YYYY, MM, DD) =>
-      `https://www.franceinter.fr/archives/${YYYY}/${MM}-${DD}`,
+    entrypoint: (year, month, day) =>
+      `https://www.franceinter.fr/archives/${year}/${f00(month)}-${f00(day)}`,
     anchors: ".simple-list-element a",
     playbtn:
       ".cover-emission-actions-buttons-wrapper button.replay-button.playable"
   },
   {
     name: "francemusique",
-    entrypoint: (YYYY, MM, DD) =>
-      `https://www.francemusique.fr/programmes/${YYYY}-${MM}-${DD}`,
+    entrypoint: (year, month, day) =>
+      `https://www.francemusique.fr/programmes/${year}-${f00(month)}-${f00(day)}`,
     anchors: "a.step-list-element-content-editorial",
     playbtn: ".cover-diffusion button.replay-button.playable"
   }

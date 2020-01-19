@@ -14,14 +14,13 @@ const recorder = new AudioRecorder(
   console
 );
 
-const formatter = (...args) => args.map(n => String(n).padStart(2, "0"));
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const formatter = (...args) => args.map(n => String(n).padStart(2, "0"));
 async function play(page, radio, year, month, day, n, duration, outputDir) {
-  const [YYYY, MM, DD] = formatter(year, month, day);
-  await page.goto(radio.entrypoint(YYYY, MM, DD), {
+  await page.goto(radio.entrypoint(year, month, day), {
     waitUntil: "networkidle2"
   });
   const programmes = await page.$$eval(radio.anchors, a => {
@@ -88,6 +87,7 @@ async function play(page, radio, year, month, day, n, duration, outputDir) {
     }
   }
 
+  const [YYYY, MM, DD] = formatter(year, month, day);
   // Recording 20sec of audio
   const file = fs.createWriteStream(
     path.join(outputDir, `./${YYYY}_${MM}_${DD}_${n}.wav`),
