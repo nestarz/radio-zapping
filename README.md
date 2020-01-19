@@ -2,6 +2,7 @@
 
 ## Requirements
 - Chromium
+- https://github.com/RedKenrok/node-audiorecorder#dependencies
 
 ## Installation
 
