@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import log from "log-to-file";
 import puppeteer from "puppeteer-core";
 import { PuppeteerBlocker } from "@cliqz/adblocker-puppeteer";
@@ -13,38 +14,16 @@ const recorder = new AudioRecorder(
   console
 );
 
+const formatter = (...args) => args.map(n => String(n).padStart(2, "0"));
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const radios = {
-  franceculture: {
-    entrypoint: (MM, DD) =>
-      `https://www.franceculture.fr/archives/2019/${MM}/${DD}`,
-    anchors: ".archives-by-day-list-element a",
-    playbtn: "button.replay-button"
-  },
-  franceinter: {
-    entrypoint: (MM, DD) =>
-      `https://www.franceinter.fr/archives/2019/${MM}-${DD}`,
-    anchors: ".simple-list-element a",
-    playbtn:
-      ".cover-emission-actions-buttons-wrapper button.replay-button.playable"
-  },
-  francemusique: {
-    entrypoint: (MM, DD) =>
-      `https://www.francemusique.fr/programmes/2019-${MM}-${DD}`,
-    anchors: "a.step-list-element-content-editorial",
-    playbtn: ".cover-diffusion button.replay-button.playable"
-  }
-};
-
-const formatter = (...args) => args.map(n => String(n).padStart(2, "0"));
-
-async function play(page, name, month, day, INDEX) {
-  const [MM, DD] = formatter(month, day);
-  const radio = radios[name];
-  await page.goto(radio.entrypoint(MM, DD), { waitUntil: "networkidle2" });
+async function play(page, radio, year, month, day, n, duration, outputDir) {
+  const [YYYY, MM, DD] = formatter(year, month, day);
+  await page.goto(radio.entrypoint(YYYY, MM, DD), {
+    waitUntil: "networkidle2"
+  });
   const programmes = await page.$$eval(radio.anchors, a => {
     return a.map(anchor => anchor.href);
   });
@@ -110,48 +89,64 @@ async function play(page, name, month, day, INDEX) {
   }
 
   // Recording 20sec of audio
-  const file = fs.createWriteStream(`2019_${MM}_${DD}_${INDEX}.wav`, {
-    encoding: "binary"
-  });
+  const file = fs.createWriteStream(
+    path.join(outputDir, `./${YYYY}_${MM}_${DD}_${n}.wav`),
+    {
+      encoding: "binary"
+    }
+  );
   recorder
     .start()
     .stream()
     .pipe(file);
-  await timeout(20000 + Math.random() * 5000);
+  await timeout(duration);
   recorder.stop();
 
   // Log a successful record
-  log(`2019_${MM}_${DD}_${INDEX}.wav; ${name}; ${programme}; ${startTime}`);
+  log(
+    `${YYYY}_${MM}_${DD}_${n}.wav; ${radio.name}; ${programme}; ${startTime}`,
+    path.join(outputDir, "records.log")
+  );
 }
 
-async function playloop() {
+async function playloop(records, executablePath, outputDir) {
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+
   const args = [
     '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36"'
   ];
 
-  for (let index = 15; index < 29; index++) {
-    for (let index2 = 0; index2 < 3; index2++) {
+  for (const record of records) {
+    const { year, month, day, n, duration, radio } = record;
+    for (let index = 0; index < n; index++) {
       const browser = await puppeteer.launch({
         args,
         headless: false,
         defaultViewport: null,
-        executablePath:
-          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        executablePath
       });
       const page = await browser.newPage();
       const blocker = await PuppeteerBlocker.fromPrebuiltAdsAndTracking(fetch);
       await blocker.enableBlockingInPage(page);
-      const radio = Object.keys(radios)[
-        Math.floor(Math.random() * Object.keys(radios).length)
-      ];
-      console.log(radio);
-      await play(page, radio, 8, index, index2).catch(err => {
-        console.log(err);
-        index2--;
+      await play(
+        page,
+        radio,
+        year,
+        month,
+        day,
+        index,
+        duration,
+        outputDir
+      ).catch(err => {
+        console.error(err);
+        console.log("Retrying...", radio, month, day, index);
+        index--;
       });
       await browser.close();
     }
   }
 }
 
-playloop();
+export default playloop;

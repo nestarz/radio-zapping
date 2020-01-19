@@ -1,7 +1,7 @@
 {
   "name": "radio-zapping",
   "version": "1.0.0",
-  "main": "main.js",
+  "main": "src/main.js",
   "license": "MIT",
   "dependencies": {
     "@cliqz/adblocker-puppeteer": "^1.5.0",
@@ -14,7 +14,7 @@
     "puppeteer-core": "^2.0.0"
   },
   "scripts": {
-    "start": "node -r esm index.js",
-    "test": "node -r esm test.js"
+    "start": "node -r esm src/index.js",
+    "test": "node -r esm src/test.js"
   }
 }
